@@ -6,7 +6,7 @@
 /*   By: ahzakzou <ahzakzou@student.42abudhabi.a    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/26 03:12:01 by ahzakzou          #+#    #+#             */
-/*   Updated: 2023/08/27 18:13:40 by ahzakzou         ###   ########.fr       */
+/*   Updated: 2023/08/28 00:23:30 by ahzakzou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,25 +23,36 @@ int	print_str(char *str)
 	int	i;
 
 	i = 0;
-	while (str [i])
+	if (!str)
+		return (write(1, "(null)", 6));
+	while (str[i])
 		ft_putchar(str[i++]);
 	return (i);
 }
 
-int	print_base( long long int num, char *s, int base)
+int	print_b(long long int tmp, unsigned long long int tmp2, char *s, int base)
 {
 	int	count;
 
 	count = 0;
-	if (num < 0)
+	if (base == 17)
 	{
-		write(1, "-", 1);
-		count++;
-		num = -num;
+		base = 16;
+		if (tmp2 / base > 0) 
+			count += print_b(0, tmp2 / base, s, base + 1);
+		count += write(1, &s[tmp2 % base], 1);
 	}
-	if (num / base > 0)
-		count += print_base(num / base, s, base);
-	count += write(1, &s[num % base], 1);
+	else
+	{
+		if (tmp < 0)
+		{
+			count += write(1, "-", 1);
+			tmp = -tmp;
+		}
+		if (tmp / base > 0)
+			count += print_b(tmp / base, 0, s, base);
+		count += write(1, &s[tmp % base], 1);
+	}
 	return (count);
 }
 
@@ -55,25 +66,25 @@ int	print_format(char ch, va_list arg)
 	if (ch == 's')
 		count += print_str(va_arg(arg, char *));
 	else if (ch == 'd' || ch == 'i')
-		count += print_base(va_arg(arg, int), "0123456789", 10);
+		count += print_b(va_arg(arg, int), 0, "0123456789", 10);
 	else if (ch == 'u')
-		count += print_base(va_arg(arg, unsigned int), "0123456789", 10);
+		count += print_b(va_arg(arg, unsigned int), 0, "0123456789", 10);
 	else if (ch == 'x')
-		count += print_base(va_arg(arg, unsigned int), "0123456789abcdef", 16);
+		count += print_b(va_arg(arg, unsigned int), 0, "0123456789abcdef", 16);
+	else if (ch == 'X')
+		count += print_b(va_arg(arg, unsigned int), 0, "0123456789ABCDEF", 16);
 	else if (ch == 'p')
 	{
 		write(1, "0x", 2);
-		count += print_base(va_arg(arg, long long int), \
-		"0123456789abcdef", 16) + 2;
+		count += print_b(0, va_arg(arg, long long), \
+		"0123456789abcdef", 17) + 2;
 	}
-	else if (ch == 'X')
-		count += print_base(va_arg(arg, unsigned int), "0123456789ABCDEF", 16);
 	else if (ch == '%')
-		write(1, "%", 1);
+		count += write(1, "%", 1);
 	return (count);
 }
 
-int ft_printf(const char *s, ...)
+int	ft_printf(const char *s, ...)
 {
 	va_list	arg;
 	int		i;
@@ -82,11 +93,11 @@ int ft_printf(const char *s, ...)
 	i = 0;
 	count = 0;
 	va_start(arg, s);
-	while (s[i] && s[i + 1])
+	while (s[i])
 	{
-		if (s[i] == '%')
+		if (s[i] == '%' && s[i + 1])
 		{
-			count += ft_printf(&s[++i], arg);
+			count += print_format(s[++i], arg);
 			i++;
 		}
 		else
@@ -95,19 +106,11 @@ int ft_printf(const char *s, ...)
 	va_end(arg);
 	return (count);
 }
-
 // int main()
 // {
-// 	int x;
-// 	int y;
-// 	int xx = 200000;
-// 	int yy = -200000;
-// 	char *tmp = "hello this is test";
-// 	x = printf("%s %p %i %d %% %% %x %x %% %c %u",tmp, &tmp, xx, yy, xx, yy, tmp[0], (unsigned int)y);
-// 	// x = printf("%% %% %x %X %% %cl %unotpercent", x, y, tmp[0], (unsigned int)y);
+// 	int	x = printf(" %p ", -1);
 // 	printf("\n");
-// 	// y = ft_printf("%% %% %x %X %% %cl %unotpercent", x, y, tmp[0], (unsigned int)y);
-// 	y = ft_printf("%s %p %i %d %% %% %x %x %% %c %u",tmp, &tmp, xx, yy, xx, yy, tmp[0], (unsigned int)y);
-// 	printf("\n");
+// 	int	y = ft_printf(" %p ", -1);
+
 // 	printf("\n%d\n%d\n", x, y);
 // }
